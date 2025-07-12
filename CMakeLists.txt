@@ -428,7 +428,7 @@ if(CMAKE_C_COMPILER_ID MATCHES "AppleClang|Clang|GNU|Intel" AND NOT CMAKE_SYSTEM
       list(APPEND mi_cflags -ftls-model=initial-exec)
     endif()
   endif()
-  if(MI_OVERRIDE)
+  if(FALSE)
     list(APPEND mi_cflags -fno-builtin-malloc)
   endif()
 endif()
@@ -437,10 +437,10 @@ if(CMAKE_C_COMPILER_ID MATCHES "AppleClang|Clang|GNU|Intel" AND NOT CMAKE_SYSTEM
   if(MI_OPT_ARCH)
     if(APPLE AND CMAKE_C_COMPILER_ID MATCHES "AppleClang|Clang" AND CMAKE_OSX_ARCHITECTURES)   # to support multi-arch binaries (#999)
       if("arm64" IN_LIST CMAKE_OSX_ARCHITECTURES)
-        list(APPEND MI_OPT_ARCH_FLAGS "-Xarch_arm64;-march=armv8.1-a")
+        list(APPEND MI_OPT_ARCH_FLAGS "-Xarch_arm64;-march=armv8.2-a")
       endif()
     elseif(MI_ARCH STREQUAL "arm64")
-      set(MI_OPT_ARCH_FLAGS "-march=armv8.1-a")  # fast atomics
+      set(MI_OPT_ARCH_FLAGS "-march=armv8.2-a")  # fast atomics
     endif()
   endif()
 endif()
@@ -454,7 +454,7 @@ if (MSVC AND MSVC_VERSION GREATER_EQUAL 1914)
   endif()
 endif()
 
-if(MINGW)
+if(FALSE)
   add_definitions(-D_WIN32_WINNT=0x600)                # issue #976
 endif()
 
@@ -486,7 +486,7 @@ endfunction()
 
 if(WIN32)
   list(APPEND mi_libraries psapi shell32 user32 advapi32 bcrypt)
-else()
+elseif(FALSE)
   find_link_library("pthread" MI_LIB_PTHREAD)
   if(MI_LIB_PTHREAD)
     list(APPEND mi_libraries "${MI_LIB_PTHREAD}")

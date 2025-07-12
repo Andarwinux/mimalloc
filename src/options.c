@@ -80,9 +80,9 @@ typedef struct mi_option_desc_s {
 
 #ifndef MI_DEFAULT_ALLOW_LARGE_OS_PAGES
 #if defined(__linux__) && !defined(__ANDROID__)
-#define MI_DEFAULT_ALLOW_LARGE_OS_PAGES 2    // enabled, but only use transparent huge pages through madvise
+#define MI_DEFAULT_ALLOW_LARGE_OS_PAGES 1    // enabled, but only use transparent huge pages through madvise
 #else
-#define MI_DEFAULT_ALLOW_LARGE_OS_PAGES 0
+#define MI_DEFAULT_ALLOW_LARGE_OS_PAGES 1
 #endif
 #endif
 

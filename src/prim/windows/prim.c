@@ -75,7 +75,7 @@ typedef SIZE_T(__stdcall* PGetLargePageMinimum)(VOID);
 static PGetLargePageMinimum pGetLargePageMinimum = NULL;
 
 // Available after Windows XP
-typedef BOOL (__stdcall *PGetPhysicallyInstalledSystemMemory)( PULONGLONG TotalMemoryInKilobytes );
+// typedef BOOL (__stdcall *PGetPhysicallyInstalledSystemMemory)( PULONGLONG TotalMemoryInKilobytes );
 
 //---------------------------------------------
 // Enable large page support dynamically (if possible)
@@ -86,7 +86,7 @@ static bool win_enable_large_os_pages(size_t* large_page_size)
   static bool large_initialized = false;
   if (large_initialized) return (_mi_os_large_page_size() > 0);
   large_initialized = true;
-  if (pGetLargePageMinimum==NULL) return false;  // no large page support (xbox etc.)
+  if (false) return false;  // no large page support (xbox etc.)
 
   // Try to see if large OS pages are supported
   // To use large pages on Windows, we first need access permission
@@ -105,8 +105,8 @@ static bool win_enable_large_os_pages(size_t* large_page_size)
       if (ok) {
         err = GetLastError();
         ok = (err == ERROR_SUCCESS);
-        if (ok && large_page_size != NULL && pGetLargePageMinimum != NULL) {
-          *large_page_size = (*pGetLargePageMinimum)();
+        if (ok && large_page_size != NULL && true) {
+          *large_page_size = GetLargePageMinimum();
         }
       }
     }
@@ -166,10 +166,10 @@ void _mi_prim_mem_init( mi_os_mem_config_t* config )
     pGetNumaHighestNodeNumber = (PGetNumaHighestNodeNumber)(void (*)(void))GetProcAddress(hDll, "GetNumaHighestNodeNumber");
     pGetLargePageMinimum = (PGetLargePageMinimum)(void (*)(void))GetProcAddress(hDll, "GetLargePageMinimum");
     // Get physical memory (not available on XP, so check dynamically)
-    PGetPhysicallyInstalledSystemMemory pGetPhysicallyInstalledSystemMemory = (PGetPhysicallyInstalledSystemMemory)(void (*)(void))GetProcAddress(hDll,"GetPhysicallyInstalledSystemMemory");
-    if (pGetPhysicallyInstalledSystemMemory != NULL) {
+    // PGetPhysicallyInstalledSystemMemory pGetPhysicallyInstalledSystemMemory = (PGetPhysicallyInstalledSystemMemory)(void (*)(void))GetProcAddress(hDll,"GetPhysicallyInstalledSystemMemory");
+    if (true) {
       ULONGLONG memInKiB = 0;
-      if ((*pGetPhysicallyInstalledSystemMemory)(&memInKiB)) {
+      if (GetPhysicallyInstalledSystemMemory(&memInKiB)) {
         if (memInKiB > 0 && memInKiB <= SIZE_MAX) {
           config->physical_memory_in_kib = (size_t)memInKiB;
         }
@@ -438,7 +438,7 @@ int _mi_prim_alloc_huge_os_pages(void* hint_addr, size_t size, int numa_node, bo
 
 size_t _mi_prim_numa_node(void) {
   USHORT numa_node = 0;
-  if (pGetCurrentProcessorNumberEx != NULL && pGetNumaProcessorNodeEx != NULL) {
+  if (true) {
     // Extended API is supported
     MI_PROCESSOR_NUMBER pnum;
     (*pGetCurrentProcessorNumberEx)(&pnum);
@@ -446,7 +446,7 @@ size_t _mi_prim_numa_node(void) {
     BOOL ok = (*pGetNumaProcessorNodeEx)(&pnum, &nnode);
     if (ok) { numa_node = nnode; }
   }
-  else if (pGetNumaProcessorNode != NULL) {
+  else if (false) {
     // Vista or earlier, use older API that is limited to 64 processors. Issue #277
     DWORD pnum = GetCurrentProcessorNumber();
     UCHAR nnode = 0;
@@ -458,23 +458,23 @@ size_t _mi_prim_numa_node(void) {
 
 size_t _mi_prim_numa_node_count(void) {
   ULONG numa_max = 0;
-  if (pGetNumaHighestNodeNumber!=NULL) {
-    (*pGetNumaHighestNodeNumber)(&numa_max);
+  if (true) {
+    GetNumaHighestNodeNumber(&numa_max);
   }
   // find the highest node number that has actual processors assigned to it. Issue #282
   while (numa_max > 0) {
-    if (pGetNumaNodeProcessorMaskEx != NULL) {
+    if (true) {
       // Extended API is supported
       GROUP_AFFINITY affinity;
-      if ((*pGetNumaNodeProcessorMaskEx)((USHORT)numa_max, &affinity)) {
+      if (GetNumaNodeProcessorMaskEx((USHORT)numa_max, &affinity)) {
         if (affinity.Mask != 0) break;  // found the maximum non-empty node
       }
     }
     else {
       // Vista or earlier, use older API that is limited to 64 processors.
       ULONGLONG mask;
-      if (pGetNumaNodeProcessorMask != NULL) {
-        if ((*pGetNumaNodeProcessorMask)((UCHAR)numa_max, &mask)) {
+      if (true) {
+        if (GetNumaNodeProcessorMask((UCHAR)numa_max, &mask)) {
           if (mask != 0) break; // found the maximum non-empty node
         }
       };
