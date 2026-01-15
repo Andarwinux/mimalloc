@@ -378,22 +378,23 @@ bool _mi_bitmap_claim_across(mi_bitmap_t bitmap, size_t bitmap_fields, size_t co
   size_t one_count = 0;
   _Atomic(size_t)*field = &bitmap[idx];
   size_t prev = mi_atomic_or_acq_rel(field++, pre_mask);
-  if ((prev & pre_mask) != 0) { all_zero = false; one_count += mi_popcount(prev & pre_mask); }
-  if ((prev & pre_mask) != pre_mask) any_zero = true;
+  one_count += mi_popcount(prev & pre_mask);
+  any_zero = (prev & pre_mask) != pre_mask;
+  #pragma clang loop unroll(disable)
   while (mid_count-- > 0) {
     prev = mi_atomic_or_acq_rel(field++, mid_mask);
-    if ((prev & mid_mask) != 0) { all_zero = false; one_count += mi_popcount(prev & mid_mask); }
+    one_count += mi_popcount(prev & mid_mask);
     if ((prev & mid_mask) != mid_mask) any_zero = true;
   }
   if (post_mask!=0) {
     prev = mi_atomic_or_acq_rel(field, post_mask);
-    if ((prev & post_mask) != 0) { all_zero = false; one_count += mi_popcount(prev & post_mask); }
-    if ((prev & post_mask) != post_mask) any_zero = true;
+    one_count += mi_popcount(prev & post_mask);
+    if (!any_zero) any_zero = (prev & post_mask) != post_mask;
   }
   if (pany_zero != NULL) { *pany_zero = any_zero; }
   if (already_set != NULL) { *already_set = one_count; };
-  mi_assert_internal(all_zero ? one_count == 0 : one_count <= count);
-  return all_zero;
+  mi_assert_internal(one_count <= count);
+  return (one_count == 0);
 }
 
 
@@ -411,21 +412,24 @@ static bool mi_bitmap_is_claimedx_across(mi_bitmap_t bitmap, size_t bitmap_field
   mi_bitmap_field_t* field = &bitmap[idx];
   size_t prev = mi_atomic_load_relaxed(field++);
   if ((prev & pre_mask) != pre_mask) all_ones = false;
-  if ((prev & pre_mask) != 0) { any_ones = true; one_count += mi_popcount(prev & pre_mask); }
+  one_count += mi_popcount(prev & pre_mask);
+  #ifdef __AVX512VPOPCNTDQ__
+  #pragma clang loop vectorize(assume_safety) unroll(disable)
+  #elif defined(__ARM_FEATURE_SVE2)
+  #pragma clang loop vectorize(assume_safety) unroll(disable)
+  #endif
   while (mid_count-- > 0) {
     prev = mi_atomic_load_relaxed(field++);
-    if ((prev & mid_mask) != mid_mask) all_ones = false;
-    if ((prev & mid_mask) != 0) { any_ones = true; one_count += mi_popcount(prev & mid_mask); }
+    one_count += mi_popcount(prev & mid_mask);
   }
   if (post_mask!=0) {
     prev = mi_atomic_load_relaxed(field);
-    if ((prev & post_mask) != post_mask) all_ones = false;
-    if ((prev & post_mask) != 0) { any_ones = true; one_count += mi_popcount(prev & post_mask); }
+    one_count += mi_popcount(prev & post_mask);
   }
-  if (pany_ones != NULL) { *pany_ones = any_ones; }
+  if (pany_ones != NULL) { *pany_ones = (one_count > 0); }
   if (already_set != NULL) { *already_set = one_count; }
-  mi_assert_internal(all_ones ? one_count == count : one_count < count);
-  return all_ones;
+  mi_assert_internal(one_count <= count);
+  return (one_count == count);
 }
 
 bool _mi_bitmap_is_claimed_across(mi_bitmap_t bitmap, size_t bitmap_fields, size_t count, mi_bitmap_index_t bitmap_idx, size_t* already_set) {

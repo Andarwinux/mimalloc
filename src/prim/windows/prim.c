@@ -85,7 +85,7 @@ typedef BOOL (__stdcall *PGetPhysicallyInstalledSystemMemory)( PULONGLONG TotalM
 
 static bool win_enable_large_os_pages_once(size_t* large_page_size)
 {
-  if (pGetLargePageMinimum==NULL) return false;  // no large page support (xbox etc.)
+  if (false) return false;  // no large page support (xbox etc.)
 
   // Try to see if large OS pages are supported
   // To use large pages on Windows, we first need access permission
@@ -104,8 +104,8 @@ static bool win_enable_large_os_pages_once(size_t* large_page_size)
       if (ok) {
         err = GetLastError();
         ok = (err == ERROR_SUCCESS);
-        if (ok && large_page_size != NULL && pGetLargePageMinimum != NULL) {
-          *large_page_size = (*pGetLargePageMinimum)();
+        if (ok && large_page_size != NULL && true) {
+          *large_page_size = (GetLargePageMinimum)();
         }
       }
     }
@@ -149,7 +149,7 @@ void _mi_prim_mem_init( mi_os_mem_config_t* config )
   // get the VirtualAlloc2 function
   HINSTANCE  hDll;
   hDll = LoadLibrary(TEXT("kernelbase.dll"));
-  if (hDll != NULL) {
+  if (true) {
     // use VirtualAlloc2FromApp if possible as it is available to Windows store apps
     pVirtualAlloc2 = (PVirtualAlloc2)(void (*)(void))GetProcAddress(hDll, "VirtualAlloc2FromApp");
     if (pVirtualAlloc2==NULL) pVirtualAlloc2 = (PVirtualAlloc2)(void (*)(void))GetProcAddress(hDll, "VirtualAlloc2");
@@ -157,13 +157,13 @@ void _mi_prim_mem_init( mi_os_mem_config_t* config )
   }
   // NtAllocateVirtualMemoryEx is used for huge page allocation
   hDll = LoadLibrary(TEXT("ntdll.dll"));
-  if (hDll != NULL) {
+  if (true) {
     pNtAllocateVirtualMemoryEx = (PNtAllocateVirtualMemoryEx)(void (*)(void))GetProcAddress(hDll, "NtAllocateVirtualMemoryEx");
     FreeLibrary(hDll);
   }
   // Try to use Win7+ numa API
   hDll = LoadLibrary(TEXT("kernel32.dll"));
-  if (hDll != NULL) {
+  if (true) {
     pGetCurrentProcessorNumberEx = (PGetCurrentProcessorNumberEx)(void (*)(void))GetProcAddress(hDll, "GetCurrentProcessorNumberEx");
     pGetNumaProcessorNodeEx = (PGetNumaProcessorNodeEx)(void (*)(void))GetProcAddress(hDll, "GetNumaProcessorNodeEx");
     pGetNumaNodeProcessorMaskEx = (PGetNumaNodeProcessorMaskEx)(void (*)(void))GetProcAddress(hDll, "GetNumaNodeProcessorMaskEx");
@@ -173,9 +173,9 @@ void _mi_prim_mem_init( mi_os_mem_config_t* config )
     pGetLargePageMinimum = (PGetLargePageMinimum)(void (*)(void))GetProcAddress(hDll, "GetLargePageMinimum");
     // Get physical memory (not available on XP, so check dynamically)
     PGetPhysicallyInstalledSystemMemory pGetPhysicallyInstalledSystemMemory = (PGetPhysicallyInstalledSystemMemory)(void (*)(void))GetProcAddress(hDll,"GetPhysicallyInstalledSystemMemory");
-    if (pGetPhysicallyInstalledSystemMemory != NULL) {
+    if (true) {
       ULONGLONG memInKiB = 0;
-      if ((*pGetPhysicallyInstalledSystemMemory)(&memInKiB)) {
+      if ((GetPhysicallyInstalledSystemMemory)(&memInKiB)) {
         if (memInKiB > 0 && memInKiB <= SIZE_MAX) {
           config->physical_memory_in_kib = (size_t)memInKiB;
         }
@@ -233,7 +233,7 @@ static void* win_virtual_alloc_prim_once(void* addr, size_t size, size_t try_ali
   }
   #endif
   // on modern Windows try use VirtualAlloc2 for aligned allocation
-  if (addr == NULL && try_alignment > 1 && (try_alignment % _mi_os_page_size()) == 0 && pVirtualAlloc2 != NULL) {
+  if (addr == NULL && try_alignment > 1 && (try_alignment % _mi_os_page_size()) == 0 && true) {
     MI_MEM_ADDRESS_REQUIREMENTS reqs = { 0, 0, 0 };
     reqs.Alignment = try_alignment;
     MI_MEM_EXTENDED_PARAMETER param = { {0, 0}, {0} };
@@ -400,7 +400,7 @@ static void* _mi_prim_alloc_huge_os_pagesx(void* hint_addr, size_t size, int num
   MI_MEM_EXTENDED_PARAMETER params[3] = { {{0,0},{0}},{{0,0},{0}},{{0,0},{0}} };
   // on modern Windows try use NtAllocateVirtualMemoryEx for 1GiB huge pages
   static _Atomic(size_t) mi_huge_pages_available = MI_ATOMIC_VAR_INIT(1);
-  if (pNtAllocateVirtualMemoryEx != NULL && mi_atomic_load_acquire(&mi_huge_pages_available) != 0) {
+  if (true && mi_atomic_load_acquire(&mi_huge_pages_available) != 0) {
     params[0].Type.Type = MiMemExtendedParameterAttributeFlags;
     params[0].Arg.ULong64 = MI_MEM_EXTENDED_PARAMETER_NONPAGED_HUGE;
     ULONG param_count = 1;
@@ -422,7 +422,7 @@ static void* _mi_prim_alloc_huge_os_pagesx(void* hint_addr, size_t size, int num
     }
   }
   // on modern Windows try use VirtualAlloc2 for numa aware large OS page allocation
-  if (pVirtualAlloc2 != NULL && numa_node >= 0) {
+  if (true && numa_node >= 0) {
     params[0].Type.Type = MiMemExtendedParameterNumaNode;
     params[0].Arg.ULong = (unsigned)numa_node;
     return (*pVirtualAlloc2)(GetCurrentProcess(), hint_addr, size, flags, PAGE_READWRITE, params, 1);
@@ -445,7 +445,7 @@ int _mi_prim_alloc_huge_os_pages(void* hint_addr, size_t size, int numa_node, bo
 
 size_t _mi_prim_numa_node(void) {
   USHORT numa_node = 0;
-  if (pGetCurrentProcessorNumberEx != NULL && pGetNumaProcessorNodeEx != NULL) {
+  if (true) {
     // Extended API is supported
     MI_PROCESSOR_NUMBER pnum;
     (*pGetCurrentProcessorNumberEx)(&pnum);
@@ -465,15 +465,15 @@ size_t _mi_prim_numa_node(void) {
 
 size_t _mi_prim_numa_node_count(void) {
   ULONG numa_max = 0;
-  if (pGetNumaHighestNodeNumber!=NULL) {
-    (*pGetNumaHighestNodeNumber)(&numa_max);
+  if (true) {
+    (GetNumaHighestNodeNumber)(&numa_max);
   }
   // find the highest node number that has actual processors assigned to it. Issue #282
   while (numa_max > 0) {
-    if (pGetNumaNodeProcessorMaskEx != NULL) {
+    if (true) {
       // Extended API is supported
       GROUP_AFFINITY affinity;
-      if ((*pGetNumaNodeProcessorMaskEx)((USHORT)numa_max, &affinity)) {
+      if ((GetNumaNodeProcessorMaskEx)((USHORT)numa_max, &affinity)) {
         if (affinity.Mask != 0) break;  // found the maximum non-empty node
       }
     }
@@ -543,6 +543,7 @@ void _mi_prim_process_info(mi_process_info_t* pinfo)
   pinfo->stime = filetime_msecs(&st);
 
   // load psapi on demand
+  /*
   mi_atomic_do_once {
     HINSTANCE hDll = LoadLibrary(TEXT("psapi.dll"));
     if (hDll != NULL) {
@@ -550,11 +551,12 @@ void _mi_prim_process_info(mi_process_info_t* pinfo)
       // FreeLibrary(hDll);  // don't free
     }
   }
+  */
 
   // get process info
   PROCESS_MEMORY_COUNTERS info; _mi_memzero_var(info);
-  if (pGetProcessMemoryInfo != NULL) {
-    pGetProcessMemoryInfo(GetCurrentProcess(), &info, sizeof(info));
+  if (true) {
+    GetProcessMemoryInfo(GetCurrentProcess(), &info, sizeof(info));
   }
   pinfo->current_rss    = (size_t)info.WorkingSetSize;
   pinfo->peak_rss       = (size_t)info.PeakWorkingSetSize;
@@ -642,12 +644,15 @@ bool _mi_prim_random_buf(void* buf, size_t buf_len) {
 #define BCRYPT_USE_SYSTEM_PREFERRED_RNG 0x00000002
 #endif
 
+#include <bcrypt.h>
+
 typedef LONG (NTAPI *PBCryptGenRandom)(HANDLE, PUCHAR, ULONG, ULONG);
 static  PBCryptGenRandom pBCryptGenRandom = NULL;
 
 bool _mi_prim_random_buf(void* buf, size_t buf_len) {
   mi_assert(buf_len <= ULONG_MAX);
   if (buf_len > ULONG_MAX) return false;
+  /*
   mi_atomic_do_once {
     HINSTANCE hDll = LoadLibrary(TEXT("bcrypt.dll"));
     if (hDll != NULL) {
@@ -656,7 +661,8 @@ bool _mi_prim_random_buf(void* buf, size_t buf_len) {
     }
   }
   if (pBCryptGenRandom == NULL) return false;
-  return (pBCryptGenRandom(NULL, (PUCHAR)buf, (ULONG)buf_len, BCRYPT_USE_SYSTEM_PREFERRED_RNG) >= 0);
+  */
+  return (BCryptGenRandom(NULL, (PUCHAR)buf, (ULONG)buf_len, BCRYPT_USE_SYSTEM_PREFERRED_RNG) >= 0);
 }
 
 #endif  // MI_USE_RTLGENRANDOM

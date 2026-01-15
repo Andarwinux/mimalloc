@@ -965,12 +965,11 @@ static inline uintptr_t _mi_random_shuffle(uintptr_t x) {
 // Count bits: trailing or leading zeros (with MI_INTPTR_BITS on all zero)
 // -----------------------------------------------------------------------
 
-#if defined(__GNUC__)
+#if 1
 
 #include <limits.h>       // LONG_MAX
 #define MI_HAVE_FAST_BITSCAN
 static inline size_t mi_clz(size_t x) {
-  if (x==0) return MI_SIZE_BITS;
   #if (SIZE_MAX == ULONG_MAX)
     return __builtin_clzl(x);
   #else
@@ -978,7 +977,6 @@ static inline size_t mi_clz(size_t x) {
   #endif
 }
 static inline size_t mi_ctz(size_t x) {
-  if (x==0) return MI_SIZE_BITS;
   #if (SIZE_MAX == ULONG_MAX)
     return __builtin_ctzl(x);
   #else
@@ -1079,9 +1077,7 @@ static inline size_t mi_bsr(size_t x) {
 size_t _mi_popcount_generic(size_t x);
 
 static inline size_t mi_popcount(size_t x) {
-  if (x<=1) return x;
-  if (x==SIZE_MAX) return MI_SIZE_BITS;
-  #if defined(__GNUC__)
+  #if 1
     #if (SIZE_MAX == ULONG_MAX)
       return __builtin_popcountl(x);
     #else
@@ -1100,7 +1096,7 @@ static inline size_t mi_popcount(size_t x) {
 // (AMD Zen3+ (~2020) or Intel Ice Lake+ (~2017). See also issue #201 and pr #253.
 // ---------------------------------------------------------------------------------
 
-#if !MI_TRACK_ENABLED && defined(_WIN32) && (defined(_M_IX86) || defined(_M_X64))
+#if !MI_TRACK_ENABLED && defined(_WIN32) && (defined(_M_IX86) || defined(_M_X64)) && 0
 #include <intrin.h>
 extern mi_decl_hidden bool _mi_cpu_has_fsrm;
 extern mi_decl_hidden bool _mi_cpu_has_erms;
