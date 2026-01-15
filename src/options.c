@@ -65,7 +65,7 @@ int mi_version(void) mi_attr_noexcept {
 #endif
 
 #ifndef MI_DEFAULT_ALLOW_LARGE_OS_PAGES
-#define MI_DEFAULT_ALLOW_LARGE_OS_PAGES 0
+#define MI_DEFAULT_ALLOW_LARGE_OS_PAGES 1
 #endif
 
 #ifndef MI_DEFAULT_RESERVE_HUGE_OS_PAGES
@@ -102,7 +102,7 @@ int mi_version(void) mi_attr_noexcept {
 
 #ifndef MI_DEFAULT_ALLOW_THP
 #if defined(__ANDROID__)
-#define MI_DEFAULT_ALLOW_THP  0
+#define MI_DEFAULT_ALLOW_THP  1
 #else
 #define MI_DEFAULT_ALLOW_THP  1
 #endif

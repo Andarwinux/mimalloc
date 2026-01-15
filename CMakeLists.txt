@@ -446,7 +446,7 @@ if(CMAKE_C_COMPILER_ID MATCHES "AppleClang|Clang|GNU|Intel" AND NOT CMAKE_SYSTEM
 endif()
 
 if(CMAKE_C_COMPILER_ID MATCHES "AppleClang|Clang|GNU|Intel")
-  if(MI_OVERRIDE)
+  if(FALSE)
     list(APPEND mi_cflags -fno-builtin-malloc)
   endif()
 endif()
@@ -480,14 +480,14 @@ if (MSVC AND MSVC_VERSION GREATER_EQUAL 1914) # vs2017+
   endif()
 endif()
 
-if(MINGW)
+if(FALSE)
   add_definitions(-D_WIN32_WINNT=0x600)                # issue #976
 endif()
 
-if(MI_OPT_ARCH_FLAGS)
-  list(APPEND mi_cflags ${MI_OPT_ARCH_FLAGS})
+if(TRUE)
+  #list(APPEND mi_cflags ${MI_OPT_ARCH_FLAGS})
   message(STATUS "Architecture specific optimization is enabled (with ${MI_OPT_ARCH_FLAGS}) (MI_OPT_ARCH=ON)")
-  if (MI_OPT_SIMD)
+  if (TRUE)
     list(APPEND mi_defines "MI_OPT_SIMD=1")
     message(STATUS "SIMD instructions are enabled (MI_OPT_SIMD=ON)")
   endif()
@@ -518,7 +518,7 @@ endfunction()
 
 if(WIN32)
   list(APPEND mi_libraries psapi shell32 user32 advapi32 bcrypt)
-else()
+elseif(FALSE)
   find_link_library("pthread" MI_LIB_PTHREAD)
   if(MI_LIB_PTHREAD)
     list(APPEND mi_libraries "${MI_LIB_PTHREAD}")
